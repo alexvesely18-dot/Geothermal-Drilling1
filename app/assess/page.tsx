@@ -7,6 +7,7 @@ import { CompanyProfile, Site, AnalysisResult } from '@/lib/types'
 import { computeOverallScoreWeighted, deriveRecommendation } from '@/lib/scoring'
 import { SALTON_SEA_SITES } from '@/data/sites'
 import SaltonSeaMap from '@/components/SaltonSeaMap'
+import SeismicCharts from '@/components/SeismicCharts'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -853,8 +854,13 @@ function ResultsView({
         })}
       </div>
 
+      {/* ── Seismic data visualizations ────────────────────────── */}
+      <div className="animate-fade-up delay-150">
+        <SeismicCharts selectedSiteId={site.id} />
+      </div>
+
       {/* ── Sensitivity sliders (collapsible) ─────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden no-print animate-fade-up delay-150">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden no-print animate-fade-up delay-200">
         <button
           onClick={() => setShowSensitivity((s) => !s)}
           className="w-full flex items-center justify-between px-6 py-4 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
