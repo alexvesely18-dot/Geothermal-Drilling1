@@ -573,7 +573,7 @@ export default function PermitsRoadmap({ company }: { company: CompanyProfile })
       <div className="bg-slate-800/60 border-t border-slate-700/40 px-6 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1">
-            <div className="text-xs font-semibold text-slate-400 mb-2">
+            <div className="text-xs font-semibold text-slate-200 mb-2">
               Estimated permitting timeline to {phase === 'pilot' ? 'first exploration well' : 'commercial operations'}
             </div>
             {/* Timeline bar */}
@@ -590,13 +590,13 @@ export default function PermitsRoadmap({ company }: { company: CompanyProfile })
                 ~{maxMonths[phase]} mo
               </span>
             </div>
-            <div className="flex justify-between text-xs text-slate-600 mt-1 px-0.5">
+            <div className="flex justify-between text-xs text-slate-400 mt-1 px-0.5">
               {[0, 6, 12, 18, 24, 36, 48].filter(m => m <= maxMonths[phase] + 6).map(m => (
                 <span key={m}>{m}mo</span>
               ))}
             </div>
           </div>
-          <div className="sm:max-w-xs text-xs text-slate-500 sm:text-right leading-relaxed">
+          <div className="sm:max-w-xs text-xs text-slate-300 sm:text-right leading-relaxed">
             <span className="text-amber-400 font-semibold">Critical path: </span>
             {bottleneck}. Begin this process in parallel with exploration drilling.
           </div>
