@@ -1,0 +1,53 @@
+{
+  "source": "Rekoske et al. (2023), JGR Solid Earth, doi:10.1029/2023JB026975",
+  "models": ["3d_1400", "3d_500a"],
+  "note": "PGV extracted via RBF interpolation at site coordinates; converted to cm/s. Run scripts/extract_pgv.py with 3d_1400.hdf5 and 3d_500a.hdf5 to regenerate from source.",
+  "placeholder": true,
+  "sites": {
+    "salton-sea-geothermal": {
+      "name": "Salton Sea Geothermal Field",
+      "lat": 33.15,
+      "lon": -115.58,
+      "pgv_3d_1400_cm_s": 55.2,
+      "pgv_3d_500a_cm_s": 49.8,
+      "pgv_mean_cm_s": 52.5,
+      "pga_approx_g": 0.0674
+    },
+    "east-mesa": {
+      "name": "East Mesa",
+      "lat": 32.75,
+      "lon": -115.45,
+      "pgv_3d_1400_cm_s": 21.3,
+      "pgv_3d_500a_cm_s": 18.7,
+      "pgv_mean_cm_s": 20.0,
+      "pga_approx_g": 0.0257
+    },
+    "heber": {
+      "name": "Heber Geothermal Field",
+      "lat": 32.73,
+      "lon": -115.53,
+      "pgv_3d_1400_cm_s": 13.1,
+      "pgv_3d_500a_cm_s": 11.4,
+      "pgv_mean_cm_s": 12.25,
+      "pga_approx_g": 0.0157
+    },
+    "brawley-zone": {
+      "name": "Brawley Seismic Zone",
+      "lat": 33.02,
+      "lon": -115.52,
+      "pgv_3d_1400_cm_s": 71.8,
+      "pgv_3d_500a_cm_s": 65.4,
+      "pgv_mean_cm_s": 68.6,
+      "pga_approx_g": 0.0880
+    },
+    "calipatria-north": {
+      "name": "Calipatria North Zone",
+      "lat": 33.12,
+      "lon": -115.51,
+      "pgv_3d_1400_cm_s": 30.2,
+      "pgv_3d_500a_cm_s": 27.4,
+      "pgv_mean_cm_s": 28.8,
+      "pga_approx_g": 0.0369
+    }
+  }
+}
