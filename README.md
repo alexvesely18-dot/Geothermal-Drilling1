@@ -40,10 +40,10 @@ Key features:
 
 ## How We Built It
 
-GeoPivot was built entirely with **Claude Code** — Anthropic's agentic coding CLI — which scaffolded and shipped the full application in under 24 hours:
+GeoPivot was built with the assistance of **Claude Code**.
 
-- Claude Code generated the 4-step assessment wizard, deterministic scoring engine, SVG Salton Sea map component, and API routes
-- Seismic data sourced from **Rekoske et al. (2023), JGR** — physics-based PGV ground motion simulations published on [Zenodo](https://zenodo.org/records/8170242)
+- Generated the 4-step assessment wizard, deterministic scoring engine, SVG Salton Sea map component, and API routes
+- Seismic data sourced from **Rekoske et al. (2023), JGR**, a physics-based PGV ground motion simulations published on [Zenodo](https://zenodo.org/records/8170242)
 - Deployed to Vercel with automatic GitHub integration
 
 ---
