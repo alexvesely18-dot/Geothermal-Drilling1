@@ -136,18 +136,145 @@ function FormInput({
   )
 }
 
+// ─── Private Data Paste Panel ─────────────────────────────────────────────────
+
+function PrivateDataPanel({
+  value,
+  onChange,
+  onExtract,
+  extracting,
+  filledCount,
+}: {
+  value: string
+  onChange: (v: string) => void
+  onExtract: () => void
+  extracting: boolean
+  filledCount: number | null
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          Paste private company data for personalized analysis
+          {filledCount !== null && filledCount > 0 && (
+            <span className="bg-cyan-100 text-cyan-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+              {filledCount} fields extracted
+            </span>
+          )}
+        </div>
+        <svg
+          width="16" height="16" viewBox="0 0 16 16" fill="none"
+          className={clsx('transition-transform', open && 'rotate-180')}
+        >
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-3">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Paste internal documents, rig specs, budget summaries, or capability reports.
+            GeoPivot uses this to auto-fill the form below and personalize your AI memo.
+            <span className="font-medium text-gray-600"> Data is not stored after your session.</span>
+          </p>
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            rows={8}
+            placeholder={`Paste anything relevant, e.g.:
+
+"Desert Basin Energy operates 4 land rigs capable of drilling to 14,000 ft in the Southwest US and California. Our Q-class wellheads are rated to 450°F. We have an allocated exploration budget of $28M for FY2025 with an 18-month deployment window. Our crews have completed 3 high-temperature geothermal-adjacent projects in Nevada..."`}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-y font-mono leading-relaxed"
+          />
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-400">{value.length.toLocaleString()} characters</p>
+            <button
+              onClick={onExtract}
+              disabled={!value.trim() || extracting}
+              className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              {extracting ? (
+                <>
+                  <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                  Extracting…
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                  Extract & Auto-fill
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Step 1: Company Info ─────────────────────────────────────────────────────
 
 function CompanyInfoStep({
   form,
   onChange,
   onNext,
+  privateData,
+  onPrivateDataChange,
 }: {
   form: CompanyProfile
   onChange: (u: Partial<CompanyProfile>) => void
   onNext: () => void
+  privateData: string
+  onPrivateDataChange: (v: string) => void
 }) {
+  const [extracting, setExtracting] = useState(false)
+  const [filledCount, setFilledCount] = useState<number | null>(null)
   const valid = form.companyName.trim().length > 0 && form.pilotBudgetM > 0
+
+  async function handleExtract() {
+    if (!privateData.trim()) return
+    setExtracting(true)
+    try {
+      const res = await fetch('/api/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: privateData }),
+      })
+      const data = await res.json()
+      if (data.profile) {
+        const p = data.profile
+        const updates: Partial<CompanyProfile> = {}
+        if (p.companyName)     updates.companyName     = p.companyName
+        if (p.rigCount)        updates.rigCount        = p.rigCount
+        if (p.drillingDepthFt) updates.drillingDepthFt = p.drillingDepthFt
+        if (p.tempToleranceF)  updates.tempToleranceF  = p.tempToleranceF
+        if (p.crewExpertise)   updates.crewExpertise   = p.crewExpertise
+        if (p.operatingRegions?.length) updates.operatingRegions = p.operatingRegions
+        if (p.pilotBudgetM)    updates.pilotBudgetM    = p.pilotBudgetM
+        if (p.timelineMonths)  updates.timelineMonths  = p.timelineMonths
+        if (p.riskTolerance)   updates.riskTolerance   = p.riskTolerance
+        onChange(updates)
+        setFilledCount(data.filled ?? Object.keys(updates).length)
+      }
+    } finally {
+      setExtracting(false)
+    }
+  }
 
   return (
     <div className="max-w-xl mx-auto">
@@ -155,6 +282,14 @@ function CompanyInfoStep({
       <p className="text-gray-500 text-sm mb-6">Tell us about your company and this pilot's strategic context.</p>
 
       <div className="space-y-5">
+        <PrivateDataPanel
+          value={privateData}
+          onChange={onPrivateDataChange}
+          onExtract={handleExtract}
+          extracting={extracting}
+          filledCount={filledCount}
+        />
+
         <div>
           <FieldLabel>Company Name</FieldLabel>
           <FormInput
@@ -733,6 +868,7 @@ function ResultsView({
 export default function AssessPage() {
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<CompanyProfile>(DEFAULT_FORM)
+  const [privateData, setPrivateData] = useState('')
   const [selectedSiteId, setSelectedSiteId] = useState('')
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [site, setSite] = useState<Site | null>(null)
@@ -764,7 +900,7 @@ export default function AssessPage() {
       fetch('/api/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company: form, site: data.site, result: data.result }),
+        body: JSON.stringify({ company: form, site: data.site, result: data.result, privateData }),
       })
         .then((r) => r.json())
         .then((d) => setExplanation(d.explanation || ''))
@@ -780,6 +916,7 @@ export default function AssessPage() {
   function handleReset() {
     setStep(1)
     setForm(DEFAULT_FORM)
+    setPrivateData('')
     setSelectedSiteId('')
     setResult(null)
     setSite(null)
@@ -807,7 +944,13 @@ export default function AssessPage() {
         <StepIndicator step={step} />
 
         {step === 1 && (
-          <CompanyInfoStep form={form} onChange={updateForm} onNext={() => setStep(2)} />
+          <CompanyInfoStep
+            form={form}
+            onChange={updateForm}
+            onNext={() => setStep(2)}
+            privateData={privateData}
+            onPrivateDataChange={setPrivateData}
+          />
         )}
         {step === 2 && (
           <CapabilitiesStep

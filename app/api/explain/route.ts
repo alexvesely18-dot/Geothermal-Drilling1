@@ -4,7 +4,12 @@ import { AnalysisResult, CompanyProfile, Site } from '@/lib/types'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { company, site, result }: { company: CompanyProfile; site: Site; result: AnalysisResult } = body
+  const { company, site, result, privateData }: {
+    company: CompanyProfile
+    site: Site
+    result: AnalysisResult
+    privateData?: string
+  } = body
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ explanation: buildFallback(company, site, result) })
@@ -12,11 +17,15 @@ export async function POST(request: NextRequest) {
 
   const client = new Anthropic()
 
+  const privateSection = privateData?.trim()
+    ? `\nAdditional private company context (use to personalize the memo):\n${privateData.slice(0, 3000)}\n`
+    : ''
+
   const prompt = `You are a strategic advisor to an oil and gas drilling company evaluating a geothermal pilot.
 
 Company: ${company.companyName} | Rigs: ${company.rigCount} | Max depth: ${company.drillingDepthFt.toLocaleString()} ft | Budget: $${company.pilotBudgetM}M | Risk tolerance: ${company.riskTolerance} | Crew: ${company.crewExpertise}
 
-Site: ${site.name} | Temp gradient: ${site.tempGradientCPerKm}°C/km | Seismic: ${site.seismicityLevel} (PGA ${site.pga}g) | Est. capex: $${site.estimatedCapexM}M
+Site: ${site.name} | Temp gradient: ${site.tempGradientCPerKm}°C/km | ROM p95 PGV: ${site.romSeismic.pgvP95CmS} cm/s | PGA ${site.pga}g | Est. capex: $${site.estimatedCapexM}M
 
 Scores — Overall: ${result.scores.overallPilotScore}/100 | Readiness: ${result.scores.companyReadiness}/100 | Seismic risk: ${result.scores.seismicRisk}/100 | Economic: ${result.scores.economicViability}/100 | Market: ${result.scores.marketPolicySupport}/100
 
@@ -25,8 +34,8 @@ Recommendation: ${result.recommendation}
 Opportunities: ${result.keyOpportunities.join('; ')}
 Risks: ${result.keyRisks.join('; ')}
 Next steps: ${result.nextSteps.join('; ')}
-
-Write a concise executive memo (3–4 paragraphs) for the company's leadership explaining this recommendation. Focus on strategic logic, primary opportunity, main risks, and recommended first move. Professional, direct tone. No headers or bullets.`
+${privateSection}
+Write a concise executive memo (3–4 paragraphs) for the company's leadership explaining this recommendation. Where private company context is available, reference it specifically (equipment, crew, budget, prior projects) to make the memo feel tailored rather than generic. Focus on strategic logic, primary opportunity, main risks, and recommended first move. Professional, direct tone. No headers or bullets.`
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
