@@ -1108,6 +1108,9 @@ export default function AssessPage() {
     if (!selectedSiteId) return
     setLoadingAnalysis(true)
     try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('geopivot:lastCompanyProfile', JSON.stringify(form))
+      }
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1160,7 +1163,13 @@ export default function AssessPage() {
           </div>
           <span className="font-bold text-slate-900">GeoPivot</span>
         </Link>
-        <span className="text-xs text-gray-400">Geothermal Pilot Assessment</span>
+        <div className="flex items-center gap-3 text-xs">
+          <Link href="/analysis" className="text-cyan-700 hover:text-cyan-900 font-medium">
+            Data analytics
+          </Link>
+          <span className="text-gray-300">·</span>
+          <span className="text-gray-400">Geothermal Pilot Assessment</span>
+        </div>
       </header>
 
       {/* Content */}

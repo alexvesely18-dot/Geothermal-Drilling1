@@ -70,6 +70,12 @@ export default function LandingPage() {
         >
           Start assessment →
         </Link>
+        <Link
+          href="/analysis"
+          className="text-sm text-slate-300 hover:text-white font-medium transition-colors hidden sm:block"
+        >
+          Data analytics
+        </Link>
       </header>
 
       {/* ── Hero ─────────────────────────────────────────────── */}
@@ -100,6 +106,13 @@ export default function LandingPage() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+          </Link>
+
+          <Link
+            href="/analysis"
+            className="mt-3 inline-flex items-center gap-2 text-sm text-cyan-300 hover:text-cyan-200 font-medium"
+          >
+            Explore data analytics →
           </Link>
 
           <p className="text-slate-600 text-xs mt-4">No account · PDF export · Sensitivity sliders</p>
