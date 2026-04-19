@@ -52,6 +52,24 @@ export function computeCompanyReadiness(company: CompanyProfile, site: Site): nu
 }
 
 // ─── Seismic Risk (higher = more dangerous) ───────────────────────────────────
+// Primary signal: ROM p95 PGV from iPOD model (Scripps LOH dataset)
+// Secondary signals: PGA and fault distance (corroborating evidence)
+
+function pgvP95ToRisk(pgvCmS: number): number {
+  // PGV thresholds based on HAZUS structural damage onset levels:
+  //  >100 cm/s → near-certain severe damage
+  //  75–100    → very high
+  //  50–75     → high
+  //  30–50     → moderate-high
+  //  15–30     → moderate
+  //  <15       → low
+  if (pgvCmS >= 100) return 95
+  if (pgvCmS >= 75)  return 85
+  if (pgvCmS >= 50)  return 72
+  if (pgvCmS >= 30)  return 58
+  if (pgvCmS >= 15)  return 38
+  return 20
+}
 
 function pgaToRisk(pga: number): number {
   return Math.min(100, Math.round(pga * 130))
@@ -61,20 +79,18 @@ function faultDistToRisk(km: number): number {
   if (km >= 20) return 5
   if (km >= 15) return 15
   if (km >= 10) return 30
-  if (km >= 5) return 55
-  if (km >= 2) return 78
+  if (km >= 5)  return 55
+  if (km >= 2)  return 78
   return 95
 }
 
-function seismicLevelToRisk(level: Site['seismicityLevel']): number {
-  return { low: 15, medium: 50, high: 85 }[level]
-}
-
 export function computeSeismicRisk(site: Site): number {
+  // ROM PGV (p95) is the primary seismic hazard signal — 50% weight
+  // PGA and fault distance corroborate at 30% and 20%
   return Math.round(
-    pgaToRisk(site.pga) * 0.40 +
-    faultDistToRisk(site.faultDistanceKm) * 0.35 +
-    seismicLevelToRisk(site.seismicityLevel) * 0.25
+    pgvP95ToRisk(site.romSeismic.pgvP95CmS) * 0.50 +
+    pgaToRisk(site.pga)                     * 0.30 +
+    faultDistToRisk(site.faultDistanceKm)   * 0.20
   )
 }
 
@@ -166,7 +182,7 @@ function deriveOpportunities(c: CompanyProfile, site: Site, s: ScoreBreakdown): 
 function deriveRisks(c: CompanyProfile, site: Site, s: ScoreBreakdown): string[] {
   const out: string[] = []
   if (s.seismicRisk >= 60)
-    out.push(`Elevated seismic hazard (PGA: ${site.pga}g) at ${site.name} requires specialized well design and monitoring`)
+    out.push(`ROM p95 PGV of ${site.romSeismic.pgvP95CmS} cm/s at ${site.name} indicates elevated seismic hazard — specialized well design required`)
   if (site.faultDistanceKm < 5)
     out.push(`Close fault proximity (${site.faultDistanceKm} km) increases operational risk and insurance costs`)
   if (s.companyReadiness < 60)

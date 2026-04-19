@@ -10,6 +10,15 @@ export interface CompanyProfile {
   riskTolerance: 'low' | 'medium' | 'high'
 }
 
+export interface ROMSeismicData {
+  pgvMeanCmS: number
+  pgvP50CmS: number
+  pgvP84CmS: number
+  pgvP95CmS: number
+  pgvMaxCmS: number
+  nScenarios: number
+}
+
 export interface Site {
   id: string
   name: string
@@ -26,6 +35,7 @@ export interface Site {
   estimatedCapexM: number
   keyFeatures: string[]
   keyRisks: string[]
+  romSeismic: ROMSeismicData
 }
 
 export interface ScoreBreakdown {

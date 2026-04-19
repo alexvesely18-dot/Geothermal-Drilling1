@@ -607,8 +607,18 @@ function ResultsView({
             <SaltonSeaMap selectedSiteId={site.id} />
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-orange-50 border border-orange-100 rounded-lg p-2">
+              <div className="text-orange-600 font-medium">ROM PGV p95</div>
+              <div className="font-bold text-gray-900">{site.romSeismic.pgvP95CmS} cm/s</div>
+              <div className="text-gray-400 mt-0.5">iPOD model · 500 scenarios</div>
+            </div>
+            <div className="bg-orange-50 border border-orange-100 rounded-lg p-2">
+              <div className="text-orange-600 font-medium">ROM PGV mean</div>
+              <div className="font-bold text-gray-900">{site.romSeismic.pgvMeanCmS} cm/s</div>
+              <div className="text-gray-400 mt-0.5">Scripps LOH dataset</div>
+            </div>
             <div className="bg-gray-50 rounded-lg p-2">
-              <div className="text-gray-500">PGA</div>
+              <div className="text-gray-500">PGA (corroborating)</div>
               <div className="font-semibold text-gray-900">{site.pga}g</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-2">

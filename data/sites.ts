@@ -1,4 +1,5 @@
 import { Site } from '@/lib/types'
+import { ROM_SEISMIC } from './seismicROM'
 
 export const SALTON_SEA_SITES: Site[] = [
   {
@@ -27,6 +28,7 @@ export const SALTON_SEA_SITES: Site[] = [
       'Corrosive brine requires specialized high-temp equipment',
       'Complex permitting near Salton Sea shoreline',
     ],
+    romSeismic: ROM_SEISMIC['salton-sea-geothermal'],
   },
   {
     id: 'east-mesa',
@@ -54,6 +56,7 @@ export const SALTON_SEA_SITES: Site[] = [
       'Distance from primary transmission lines',
       'Competitive land leasing environment',
     ],
+    romSeismic: ROM_SEISMIC['east-mesa'],
   },
   {
     id: 'heber',
@@ -81,6 +84,7 @@ export const SALTON_SEA_SITES: Site[] = [
       'Limited new acreage available',
       'Lower upside vs. higher-temperature zones',
     ],
+    romSeismic: ROM_SEISMIC['heber'],
   },
   {
     id: 'brawley-zone',
@@ -109,6 +113,7 @@ export const SALTON_SEA_SITES: Site[] = [
       'Limited infrastructure — high mobilization cost',
       'Requires earthquake-resilient well design',
     ],
+    romSeismic: ROM_SEISMIC['brawley-zone'],
   },
   {
     id: 'calipatria-north',
@@ -136,5 +141,6 @@ export const SALTON_SEA_SITES: Site[] = [
       'Lower resource temperature reduces economic ceiling',
       'Exploratory risk — resource may underperform estimates',
     ],
+    romSeismic: ROM_SEISMIC['calipatria-north'],
   },
 ]
