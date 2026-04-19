@@ -139,12 +139,22 @@ export function computeMarketPolicySupport(company: CompanyProfile, site: Site):
 
 // ─── Overall Score ────────────────────────────────────────────────────────────
 
+/** Weights for the headline pilot score (transparent, documented in UI). */
+export const OVERALL_SCORE_WEIGHTS = {
+  companyReadiness: 0.35,
+  economicViability: 0.3,
+  marketPolicySupport: 0.2,
+  /** Applied to (100 − seismicRisk) — lower seismic hazard raises the score. */
+  seismicMitigation: 0.15,
+} as const
+
 export function computeOverallScore(s: Omit<ScoreBreakdown, 'overallPilotScore'>): number {
+  const w = OVERALL_SCORE_WEIGHTS
   const raw =
-    s.companyReadiness * 0.35 +
-    s.economicViability * 0.30 +
-    s.marketPolicySupport * 0.20 +
-    (100 - s.seismicRisk) * 0.15
+    s.companyReadiness * w.companyReadiness +
+    s.economicViability * w.economicViability +
+    s.marketPolicySupport * w.marketPolicySupport +
+    (100 - s.seismicRisk) * w.seismicMitigation
   return Math.max(0, Math.min(100, Math.round(raw)))
 }
 

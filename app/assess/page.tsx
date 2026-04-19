@@ -4,26 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
 import { CompanyProfile, Site, AnalysisResult } from '@/lib/types'
-import { computeOverallScoreWeighted, deriveRecommendation } from '@/lib/scoring'
+import { OVERALL_SCORE_WEIGHTS } from '@/lib/scoring'
 import { SALTON_SEA_SITES } from '@/data/sites'
 import SaltonSeaMap from '@/components/SaltonSeaMap'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Step = 1 | 2 | 3 | 4
-
-const DEMO_PROFILE: CompanyProfile = {
-  companyName: 'Desert Basin Energy',
-  rigCount: 4,
-  drillingDepthFt: 12000,
-  tempToleranceF: 450,
-  crewExpertise: 'experienced',
-  operatingRegions: ['california', 'southwest_us'],
-  pilotBudgetM: 35,
-  timelineMonths: 24,
-  riskTolerance: 'medium',
-}
-const DEMO_SITE_ID = 'salton-sea-geothermal'
 
 const DEFAULT_FORM: CompanyProfile = {
   companyName: '',
@@ -197,8 +184,9 @@ function PrivateDataPanel({
       {open && (
         <div className="px-4 pb-4 space-y-3">
           <p className="text-xs text-gray-500 leading-relaxed">
-            Paste rig specs, budget docs, or capability reports to auto-fill fields and personalize your AI memo.
-            <span className="font-medium text-gray-600"> Not stored.</span>
+            Paste internal documents, rig specs, budget summaries, or capability reports.
+            GeoPivot uses this to auto-fill the form below and personalize your AI memo.
+            <span className="font-medium text-gray-600"> Data is not stored after your session.</span>
           </p>
           <textarea
             value={value}
@@ -246,14 +234,12 @@ function CompanyInfoStep({
   form,
   onChange,
   onNext,
-  onLoadDemo,
   privateData,
   onPrivateDataChange,
 }: {
   form: CompanyProfile
   onChange: (u: Partial<CompanyProfile>) => void
   onNext: () => void
-  onLoadDemo: () => void
   privateData: string
   onPrivateDataChange: (v: string) => void
 }) {
@@ -293,16 +279,8 @@ function CompanyInfoStep({
 
   return (
     <div className="max-w-xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-slate-900">Company Info</h2>
-        <button
-          type="button"
-          onClick={onLoadDemo}
-          className="text-xs bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-full font-medium transition-colors"
-        >
-          ★ Try Demo
-        </button>
-      </div>
+      <h2 className="text-2xl font-bold text-slate-900 mb-1">Company Information</h2>
+      <p className="text-gray-500 text-sm mb-6">Tell us about your company and this pilot's strategic context.</p>
 
       <div className="space-y-5">
         <PrivateDataPanel
@@ -332,6 +310,7 @@ function CompanyInfoStep({
               min={1}
               max={500}
             />
+            <p className="text-xs text-gray-400 mt-1">Total available for geothermal pilot</p>
           </div>
           <div>
             <FieldLabel>Timeline (months)</FieldLabel>
@@ -410,7 +389,8 @@ function CapabilitiesStep({
 
   return (
     <div className="max-w-xl mx-auto">
-      <h2 className="text-2xl font-bold text-slate-900 mb-6">Technical Capabilities</h2>
+      <h2 className="text-2xl font-bold text-slate-900 mb-1">Technical Capabilities</h2>
+      <p className="text-gray-500 text-sm mb-6">Your equipment and team capabilities determine geothermal readiness.</p>
 
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
@@ -453,6 +433,7 @@ function CapabilitiesStep({
               </option>
             ))}
           </select>
+          <p className="text-xs text-gray-400 mt-1">Geothermal wells in this region reach 400–600°F</p>
         </div>
 
         <div>
@@ -534,7 +515,8 @@ function SiteSelectionStep({
 }) {
   return (
     <div className="max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold text-slate-900 mb-6">Select a Site</h2>
+      <h2 className="text-2xl font-bold text-slate-900 mb-1">Select a Candidate Site</h2>
+      <p className="text-gray-500 text-sm mb-6">Choose one Salton Sea / Imperial Valley zone to evaluate for your pilot.</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {SALTON_SEA_SITES.map((site) => {
@@ -697,372 +679,222 @@ function ResultsView({
   loadingExplanation: boolean
   onReset: () => void
 }) {
-  const { scores, keyOpportunities, keyRisks, nextSteps } = result
-
-  const [weights, setWeights] = useState({ readiness: 35, economic: 30, market: 20, seismic: 15 })
-  const [showSensitivity, setShowSensitivity] = useState(false)
-  const wtotal = weights.readiness + weights.economic + weights.market + weights.seismic
-  const liveScore = wtotal > 0 ? computeOverallScoreWeighted(scores, weights) : scores.overallPilotScore
-  const liveRec = deriveRecommendation(liveScore, company.riskTolerance)
-  const rc = recColors(liveRec)
-
-  // Sub-score cards config
-  const scoreCards = [
-    {
-      label: 'Readiness',
-      score: scores.companyReadiness,
-      invert: false,
-      color: '#3b82f6',
-      bg: 'bg-blue-50',
-      border: 'border-blue-100',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <rect x="2" y="8" width="3" height="6" rx="1" fill="currentColor" opacity="0.5"/>
-          <rect x="6.5" y="5" width="3" height="9" rx="1" fill="currentColor" opacity="0.75"/>
-          <rect x="11" y="2" width="3" height="12" rx="1" fill="currentColor"/>
-        </svg>
-      ),
-    },
-    {
-      label: 'Economics',
-      score: scores.economicViability,
-      invert: false,
-      color: '#10b981',
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-100',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4"/>
-          <path d="M8 5v6M6 9.5c0 .8.9 1.5 2 1.5s2-.7 2-1.5-1-1.3-2-1.5-2-.8-2-1.5S6.9 5 8 5s2 .6 2 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-        </svg>
-      ),
-    },
-    {
-      label: 'Policy',
-      score: scores.marketPolicySupport,
-      invert: false,
-      color: '#8b5cf6',
-      bg: 'bg-violet-50',
-      border: 'border-violet-100',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-          <path d="M5 6h6M5 9h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-        </svg>
-      ),
-    },
-    {
-      label: 'Seismic',
-      score: scores.seismicRisk,
-      invert: true,
-      color: '#f59e0b',
-      bg: 'bg-amber-50',
-      border: 'border-amber-100',
-      note: 'lower = safer',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 2L2 13h12L8 2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-          <path d="M8 9V7M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-      ),
-    },
-  ]
+  const { scores, recommendation, keyOpportunities, keyRisks, nextSteps } = result
+  const rc = recColors(recommendation)
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
-
-      {/* ── Hero banner ───────────────────────────────────────── */}
-      <div className={clsx(
-        'rounded-2xl border-2 overflow-hidden animate-fade-up',
-        rc.bg, rc.border
-      )}>
-        <div className="flex flex-col sm:flex-row sm:items-stretch">
-          {/* Left: verdict */}
-          <div className="flex-1 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <span className={clsx('text-white text-sm font-bold px-3 py-1 rounded-full tracking-wide', rc.badge)}>
-                {liveRec}
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top card */}
+      <div className={clsx('rounded-2xl border-2 p-6', rc.bg, rc.border)}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <span className={clsx('text-white text-sm font-bold px-3 py-1 rounded-full', rc.badge)}>
+                {recommendation}
               </span>
-              <span className="text-xs text-gray-500 font-medium">
+              <span className="text-xs text-gray-500">
                 {company.companyName} · {site.name}
               </span>
             </div>
-            <h2 className={clsx('text-2xl font-bold leading-tight mb-2', rc.text)}>
-              {liveRec === 'Go'
+            <h2 className={clsx('text-xl font-bold', rc.text)}>
+              {recommendation === 'Go'
                 ? 'Proceed with the geothermal pilot'
-                : liveRec === 'Conditional Go'
-                ? 'Pilot viable — conditions to address'
+                : recommendation === 'Conditional Go'
+                ? 'Pilot viable with conditions addressed'
                 : 'Pilot not recommended at this stage'}
             </h2>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              {liveRec === 'Go'
-                ? 'Strong capability match, favorable economics, and supportive policy environment.'
-                : liveRec === 'Conditional Go'
-                ? 'Viable opportunity with key gaps that should be resolved before committing capital.'
-                : 'Critical capability or risk gaps make this pilot inadvisable without major changes.'}
+            <p className="text-sm text-gray-600 mt-1">
+              Overall Pilot Score:{' '}
+              <strong className={rc.text}>{scores.overallPilotScore}/100</strong> ·{' '}
+              {recommendation === 'Go'
+                ? 'Strong fit across readiness, economics, and policy'
+                : recommendation === 'Conditional Go'
+                ? 'Conditions exist that should be resolved before committing'
+                : 'Key capability or risk gaps make the pilot inadvisable now'}
             </p>
+          </div>
+          <ScoreCircle score={scores.overallPilotScore} />
+        </div>
+      </div>
 
-            {/* Quick site stats strip */}
-            <div className="mt-4 flex flex-wrap gap-3">
-              {[
-                { label: 'Resource quality', val: `${site.resourceQuality}/100` },
-                { label: 'Temp gradient',    val: `${site.tempGradientCPerKm}°C/km` },
-                { label: 'Est. capex',        val: `$${site.estimatedCapexM}M` },
-                { label: 'ROM PGV p95',       val: `${site.romSeismic.pgvP95CmS} cm/s` },
-              ].map(({ label, val }) => (
-                <div key={label} className="bg-white/60 border border-white/80 rounded-lg px-3 py-1.5">
-                  <div className="text-xs text-gray-500">{label}</div>
-                  <div className="text-sm font-bold text-gray-900">{val}</div>
-                </div>
-              ))}
+      {/* Score breakdown */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">Score Breakdown</h3>
+        <div className="space-y-4">
+          <ScoreRow label="Company Readiness" score={scores.companyReadiness} note="rigs, depth, budget, crew" />
+          <ScoreRow label="Economic Viability" score={scores.economicViability} note="resource quality, incentives, capex" />
+          <ScoreRow label="Market & Policy Support" score={scores.marketPolicySupport} note="CA policy, infrastructure, experience" />
+          <ScoreRow
+            label="Seismic Risk"
+            score={scores.seismicRisk}
+            invert
+            note="lower bar = safer site"
+          />
+        </div>
+        <details className="mt-5 pt-5 border-t border-gray-100 group">
+          <summary className="text-sm font-medium text-cyan-700 cursor-pointer list-none flex items-center gap-2 [&::-webkit-details-marker]:hidden">
+            <span className="w-5 h-5 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center text-xs group-open:rotate-90 transition-transform">
+              ›
+            </span>
+            How is the overall pilot score calculated?
+          </summary>
+          <div className="mt-3 text-sm text-gray-600 leading-relaxed space-y-2 pl-7">
+            <p>
+              The headline score (0–100) is a weighted blend of the four dimensions above. Weights are fixed for
+              transparency:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-gray-700">
+              <li>
+                <strong>{Math.round(OVERALL_SCORE_WEIGHTS.companyReadiness * 100)}%</strong> company readiness
+              </li>
+              <li>
+                <strong>{Math.round(OVERALL_SCORE_WEIGHTS.economicViability * 100)}%</strong> economic viability
+              </li>
+              <li>
+                <strong>{Math.round(OVERALL_SCORE_WEIGHTS.marketPolicySupport * 100)}%</strong> market &amp; policy support
+              </li>
+              <li>
+                <strong>{Math.round(OVERALL_SCORE_WEIGHTS.seismicMitigation * 100)}%</strong> of{' '}
+                <em>(100 − seismic risk)</em> — lower seismic hazard raises this term
+              </li>
+            </ul>
+            <p className="text-xs text-gray-500">
+              Recommendation thresholds depend on your stated risk tolerance. Explore ROM statistics and benchmark scores
+              on the{' '}
+              <Link href="/analysis" className="text-cyan-600 font-medium hover:underline">
+                Data analytics
+              </Link>{' '}
+              page.
+            </p>
+          </div>
+        </details>
+      </div>
+
+      {/* Map + Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4">
+          <h3 className="font-semibold text-gray-900 mb-3 text-sm">
+            Site Map — {site.name}
+          </h3>
+          <div className="rounded-xl overflow-hidden border border-gray-100" style={{ height: 280 }}>
+            <SaltonSeaMap selectedSiteId={site.id} />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-orange-50 border border-orange-100 rounded-lg p-2">
+              <div className="text-orange-600 font-medium">ROM PGV p95</div>
+              <div className="font-bold text-gray-900">{site.romSeismic.pgvP95CmS} cm/s</div>
+              <div className="text-gray-400 mt-0.5">iPOD model · 500 scenarios</div>
+            </div>
+            <div className="bg-orange-50 border border-orange-100 rounded-lg p-2">
+              <div className="text-orange-600 font-medium">ROM PGV mean</div>
+              <div className="font-bold text-gray-900">{site.romSeismic.pgvMeanCmS} cm/s</div>
+              <div className="text-gray-400 mt-0.5">Scripps LOH dataset</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-2">
+              <div className="text-gray-500">PGA (corroborating)</div>
+              <div className="font-semibold text-gray-900">{site.pga}g</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-2">
+              <div className="text-gray-500">Fault distance</div>
+              <div className="font-semibold text-gray-900">{site.faultDistanceKm} km</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-2">
+              <div className="text-gray-500">Temp gradient</div>
+              <div className="font-semibold text-gray-900">{site.tempGradientCPerKm}°C/km</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-2">
+              <div className="text-gray-500">Est. capex</div>
+              <div className="font-semibold text-gray-900">${site.estimatedCapexM}M</div>
             </div>
           </div>
+        </div>
 
-          {/* Right: score circle */}
-          <div className={clsx(
-            'flex items-center justify-center px-8 py-6 border-t sm:border-t-0 sm:border-l',
-            rc.border
-          )}>
-            <ScoreCircle score={liveScore} />
+        <div className="space-y-4">
+          {/* Opportunities */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+              <span className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xs">↑</span>
+              Key Opportunities
+            </h3>
+            <ul className="space-y-2">
+              {keyOpportunities.map((o, i) => (
+                <li key={i} className="flex gap-2 text-sm text-gray-700">
+                  <span className="text-green-500 mt-0.5 shrink-0">•</span>
+                  {o}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* Risks */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+              <span className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xs">!</span>
+              Key Risks
+            </h3>
+            <ul className="space-y-2">
+              {keyRisks.map((r, i) => (
+                <li key={i} className="flex gap-2 text-sm text-gray-700">
+                  <span className="text-red-400 mt-0.5 shrink-0">•</span>
+                  {r}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
 
-      {/* ── Sub-score cards ────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fade-up delay-100">
-        {scoreCards.map(({ label, score, invert, color, bg, border, icon, note }) => {
-          const display = invert ? 100 - score : score
-          const lbl = scoreLabel(score, invert)
-          return (
-            <div key={label} className={clsx('rounded-xl border p-4', bg, border)}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
-                <span style={{ color }} className="opacity-80">{icon}</span>
-              </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{invert ? score : score}</div>
-              <div className="w-full h-1.5 rounded-full bg-white/70 mb-1.5">
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${display}%`, backgroundColor: color }} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium" style={{ color }}>{lbl}</span>
-                {note && <span className="text-xs text-gray-400">{note}</span>}
-              </div>
-            </div>
-          )
-        })}
+      {/* Next Steps */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">Recommended Next Steps</h3>
+        <ol className="space-y-3">
+          {nextSteps.map((step, i) => (
+            <li key={i} className="flex gap-3 text-sm text-gray-700">
+              <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-semibold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                {i + 1}
+              </span>
+              {step}
+            </li>
+          ))}
+        </ol>
       </div>
 
-      {/* ── Sensitivity sliders (collapsible) ─────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden no-print animate-fade-up delay-150">
-        <button
-          onClick={() => setShowSensitivity((s) => !s)}
-          className="w-full flex items-center justify-between px-6 py-4 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
-        >
-          <span className="flex items-center gap-3">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-gray-400">
-              <path d="M2 4h2m0 0a2 2 0 0 0 4 0m-4 0V2m4 2h4M2 10h6m0 0a2 2 0 0 0 4 0m-4 0v2m4-2h0V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-            Sensitivity Analysis
-            <span className={clsx('text-xs px-2 py-0.5 rounded-full font-medium text-white', recColors(liveRec).badge)}>
-              {liveScore}/100 · {liveRec}
-            </span>
-          </span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
-            className={clsx('transition-transform text-gray-400', showSensitivity && 'rotate-180')}>
-            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        {showSensitivity && (
-          <div className="px-6 pb-6 border-t border-gray-100 pt-5">
-            <p className="text-xs text-gray-500 mb-4">
-              Adjust factor weights — the score and recommendation above update live.
-            </p>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              {([
-                { key: 'readiness', label: 'Company Readiness', color: '#3b82f6' },
-                { key: 'economic',  label: 'Economic Viability', color: '#10b981' },
-                { key: 'market',    label: 'Market & Policy',    color: '#8b5cf6' },
-                { key: 'seismic',   label: 'Seismic Safety',     color: '#f59e0b' },
-              ] as { key: keyof typeof weights; label: string; color: string }[]).map(({ key, label, color }) => {
-                const pct = wtotal > 0 ? Math.round((weights[key] / wtotal) * 100) : 25
-                return (
-                  <div key={key}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-gray-700">{label}</span>
-                      <span className="text-xs font-bold w-8 text-right" style={{ color }}>{pct}%</span>
-                    </div>
-                    <input type="range" min={0} max={100} value={weights[key]}
-                      onChange={(e) => setWeights((w) => ({ ...w, [key]: Number(e.target.value) }))}
-                      className="w-full h-1.5 cursor-pointer rounded-full appearance-none bg-gray-200"
-                      style={{ accentColor: color }}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-            <button onClick={() => setWeights({ readiness: 35, economic: 30, market: 20, seismic: 15 })}
-              className="mt-4 text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2">
-              Reset to defaults
-            </button>
+      {/* AI Executive Summary */}
+      <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6">
+        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-medium">AI</span>
+          Executive Summary
+        </h3>
+        {loadingExplanation ? (
+          <div className="space-y-2 animate-pulse">
+            {[100, 85, 90, 70].map((w, i) => (
+              <div key={i} className="h-3 rounded-full bg-gray-200" style={{ width: `${w}%` }} />
+            ))}
           </div>
+        ) : explanation ? (
+          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{explanation}</div>
+        ) : (
+          <p className="text-sm text-gray-400 italic">
+            Add an ANTHROPIC_API_KEY to .env.local to enable AI-generated memos.
+          </p>
         )}
       </div>
 
-      {/* ── Full-width interactive map ─────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden animate-fade-up delay-200">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-cyan-500">
-              <path d="M7 1C4.24 1 2 3.24 2 6c0 3.75 5 8 5 8s5-4.25 5-8c0-2.76-2.24-5-5-5z" stroke="currentColor" strokeWidth="1.4"/>
-              <circle cx="7" cy="6" r="1.8" fill="currentColor"/>
-            </svg>
-            {site.name} — Salton Sea Basin
-          </h3>
-          <div className="flex items-center gap-3 text-xs text-gray-400">
-            {(['low','medium','high'] as const).map(l => (
-              <span key={l} className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full inline-block" style={{
-                  backgroundColor: l === 'low' ? '#22c55e' : l === 'medium' ? '#f59e0b' : '#ef4444'
-                }}/>
-                {l}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div style={{ height: 460 }}>
-          <SaltonSeaMap selectedSiteId={site.id} />
-        </div>
-        {/* Seismic data strip below map */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 border-t border-gray-100">
-          {[
-            { label: 'PGV p95',       val: `${site.romSeismic.pgvP95CmS} cm/s`, accent: true },
-            { label: 'PGV mean',      val: `${site.romSeismic.pgvMeanCmS} cm/s`, accent: true },
-            { label: 'PGA',           val: `${site.pga}g` },
-            { label: 'Fault dist.',   val: `${site.faultDistanceKm} km` },
-            { label: 'Temp gradient', val: `${site.tempGradientCPerKm}°C/km` },
-            { label: 'Seismic zone',  val: site.seismicityLevel },
-          ].map(({ label, val, accent }, i) => (
-            <div key={label} className={clsx(
-              'px-4 py-3 text-xs',
-              i < 5 && 'border-r border-gray-100',
-              accent ? 'bg-orange-50' : 'bg-gray-50'
-            )}>
-              <div className={clsx('font-medium mb-0.5', accent ? 'text-orange-600' : 'text-gray-500')}>{label}</div>
-              <div className="font-bold text-gray-900 text-sm">{val}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Opportunities + Risks ──────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-fade-up delay-250">
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl p-5">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-            <span className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">↑</span>
-            Opportunities
-          </h3>
-          <ul className="space-y-3">
-            {keyOpportunities.map((o, i) => (
-              <li key={i} className="flex gap-3 text-sm text-gray-700">
-                <span className="w-5 h-5 rounded-full bg-green-100 border border-green-200 flex items-center justify-center text-green-600 text-xs font-bold shrink-0 mt-0.5">
-                  {i + 1}
-                </span>
-                {o}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-100 rounded-2xl p-5">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-sm">
-            <span className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">!</span>
-            Risks
-          </h3>
-          <ul className="space-y-3">
-            {keyRisks.map((r, i) => (
-              <li key={i} className="flex gap-3 text-sm text-gray-700">
-                <span className="w-5 h-5 rounded-full bg-red-100 border border-red-200 flex items-center justify-center text-red-600 text-xs font-bold shrink-0 mt-0.5">
-                  {i + 1}
-                </span>
-                {r}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* ── Next Steps (timeline) ──────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-up delay-300">
-        <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="text-cyan-500">
-            <path d="M7.5 1v6.5L11 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            <circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
-          </svg>
-          Recommended Next Steps
-        </h3>
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="absolute left-4 top-5 bottom-2 w-0.5 bg-gradient-to-b from-cyan-400 to-cyan-100" />
-          <ol className="space-y-4">
-            {nextSteps.map((step, i) => (
-              <li key={i} className="flex gap-4 pl-2">
-                <span className="relative z-10 w-8 h-8 rounded-full bg-white border-2 border-cyan-400 text-cyan-600 font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">
-                  {i + 1}
-                </span>
-                <div className="flex-1 pt-1.5 pb-1">
-                  <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </div>
-
-      {/* ── AI Executive Memo ──────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200 overflow-hidden animate-fade-up delay-400">
-        <div className="bg-slate-800 px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 px-2 py-0.5 rounded-full font-semibold">AI</span>
-            <span className="text-sm font-semibold text-white">Executive Memo</span>
-          </div>
-          <span className="text-xs text-slate-500">
-            {company.companyName} · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-          </span>
-        </div>
-        <div className="bg-slate-50 px-6 py-5">
-          {loadingExplanation ? (
-            <div className="space-y-2.5 animate-pulse">
-              {[100, 88, 94, 72, 85, 60].map((w, i) => (
-                <div key={i} className="h-3 rounded-full bg-slate-200" style={{ width: `${w}%` }} />
-              ))}
-            </div>
-          ) : explanation ? (
-            <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line font-[system-ui]">
-              {explanation}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 italic">
-              Add an ANTHROPIC_API_KEY to .env.local to enable AI-generated memos.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* ── Actions ────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-3 justify-between items-center pb-6 no-print">
-        <button onClick={onReset}
-          className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1.5 transition-colors">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          New assessment
+      {/* Actions */}
+      <div className="flex flex-wrap gap-3 justify-between items-center pb-6">
+        <button
+          onClick={onReset}
+          className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
+        >
+          ← Start new assessment
         </button>
-        <button onClick={() => window.print()}
-          className="flex items-center gap-2 text-sm bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-colors shadow-sm">
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-2 text-sm bg-white border border-gray-200 hover:border-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+        >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 5V2h8v3M3 10H1V6h12v4h-2M3 8h8v4H3V8z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+            <path d="M3 5V2h8v3M3 10H1V6h12v4h-2M3 8h8v4H3V8z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
           </svg>
-          Print / PDF
+          Print / Export PDF
         </button>
       </div>
     </div>
@@ -1084,12 +916,6 @@ export default function AssessPage() {
 
   function updateForm(updates: Partial<CompanyProfile>) {
     setForm((prev) => ({ ...prev, ...updates }))
-  }
-
-  function handleLoadDemo() {
-    setForm(DEMO_PROFILE)
-    setSelectedSiteId(DEMO_SITE_ID)
-    setStep(3)
   }
 
   async function handleAnalyze() {
@@ -1148,52 +974,55 @@ export default function AssessPage() {
           </div>
           <span className="font-bold text-slate-900">GeoPivot</span>
         </Link>
-        <span className="text-xs text-gray-400">Geothermal Pilot Assessment</span>
+        <div className="flex items-center gap-3 text-xs">
+          <Link href="/analysis" className="text-cyan-600 hover:text-cyan-800 font-medium">
+            Data analytics
+          </Link>
+          <span className="text-gray-300">·</span>
+          <span className="text-gray-400">Geothermal Pilot Assessment</span>
+        </div>
       </header>
 
       {/* Content */}
       <main className="flex-1 px-4 py-8 sm:px-6">
-        <div className="no-print"><StepIndicator step={step} /></div>
+        <StepIndicator step={step} />
 
-        <div key={step} className="animate-fade-up">
-          {step === 1 && (
-            <CompanyInfoStep
-              form={form}
-              onChange={updateForm}
-              onNext={() => setStep(2)}
-              onLoadDemo={handleLoadDemo}
-              privateData={privateData}
-              onPrivateDataChange={setPrivateData}
-            />
-          )}
-          {step === 2 && (
-            <CapabilitiesStep
-              form={form}
-              onChange={updateForm}
-              onBack={() => setStep(1)}
-              onNext={() => setStep(3)}
-            />
-          )}
-          {step === 3 && (
-            <SiteSelectionStep
-              selectedSiteId={selectedSiteId}
-              onSelect={setSelectedSiteId}
-              onBack={() => setStep(2)}
-              onSubmit={handleAnalyze}
-              loading={loadingAnalysis}
-            />
-          )}
-          {step === 4 && result && site && (
-            <ResultsView
-              company={form}
-              site={site}
-              result={result}
-              explanation={explanation}
-              loadingExplanation={loadingExplanation}
-              onReset={handleReset}
-            />
-          )}
-        </div>
+        {step === 1 && (
+          <CompanyInfoStep
+            form={form}
+            onChange={updateForm}
+            onNext={() => setStep(2)}
+            privateData={privateData}
+            onPrivateDataChange={setPrivateData}
+          />
+        )}
+        {step === 2 && (
+          <CapabilitiesStep
+            form={form}
+            onChange={updateForm}
+            onBack={() => setStep(1)}
+            onNext={() => setStep(3)}
+          />
+        )}
+        {step === 3 && (
+          <SiteSelectionStep
+            selectedSiteId={selectedSiteId}
+            onSelect={setSelectedSiteId}
+            onBack={() => setStep(2)}
+            onSubmit={handleAnalyze}
+            loading={loadingAnalysis}
+          />
+        )}
+        {step === 4 && result && site && (
+          <ResultsView
+            company={form}
+            site={site}
+            result={result}
+            explanation={explanation}
+            loadingExplanation={loadingExplanation}
+            onReset={handleReset}
+          />
+        )}
       </main>
     </div>
   )
