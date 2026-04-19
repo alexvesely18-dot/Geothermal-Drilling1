@@ -17,23 +17,58 @@
   }
 }
 
+/* ── Entrance animations ─────────────────────────────────────────────────── */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-right {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-up    { animation: fade-up    0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in    { animation: fade-in    0.35s ease-out both; }
+.animate-slide-right{ animation: slide-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.delay-75  { animation-delay:  75ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-250 { animation-delay: 250ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ── Drill animation keyframes (used in DrillAnimation SVG via inline style) */
+
+@keyframes drill-bounce {
+  0%, 100% { transform: translateY(0px); }
+  40%       { transform: translateY(5px); }
+  60%       { transform: translateY(3px); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Print ───────────────────────────────────────────────────────────────── */
+
 @media print {
-  /* Hide everything except results */
   header, nav, .no-print { display: none !important; }
   body { background: white !important; font-size: 12px; }
-  .print-container { padding: 0 !important; }
-
-  /* Force page breaks */
-  .print-break { page-break-before: always; }
-
-  /* Ensure colors print */
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-  /* Remove shadows and borders that look bad in print */
   .rounded-2xl { border-radius: 4px !important; }
   button { display: none !important; }
   a[href]::after { content: none !important; }
-
-  /* Score bars need explicit background */
   .score-bar { background-color: #e5e7eb !important; }
+  .animate-fade-up, .animate-fade-in { animation: none !important; opacity: 1 !important; }
 }

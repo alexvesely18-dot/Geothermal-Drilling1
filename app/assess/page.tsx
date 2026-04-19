@@ -197,9 +197,8 @@ function PrivateDataPanel({
       {open && (
         <div className="px-4 pb-4 space-y-3">
           <p className="text-xs text-gray-500 leading-relaxed">
-            Paste internal documents, rig specs, budget summaries, or capability reports.
-            GeoPivot uses this to auto-fill the form below and personalize your AI memo.
-            <span className="font-medium text-gray-600"> Data is not stored after your session.</span>
+            Paste rig specs, budget docs, or capability reports to auto-fill fields and personalize your AI memo.
+            <span className="font-medium text-gray-600"> Not stored.</span>
           </p>
           <textarea
             value={value}
@@ -294,8 +293,8 @@ function CompanyInfoStep({
 
   return (
     <div className="max-w-xl mx-auto">
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="text-2xl font-bold text-slate-900">Company Information</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-slate-900">Company Info</h2>
         <button
           type="button"
           onClick={onLoadDemo}
@@ -304,7 +303,6 @@ function CompanyInfoStep({
           ★ Try Demo
         </button>
       </div>
-      <p className="text-gray-500 text-sm mb-6">Tell us about your company and this pilot's strategic context.</p>
 
       <div className="space-y-5">
         <PrivateDataPanel
@@ -334,7 +332,6 @@ function CompanyInfoStep({
               min={1}
               max={500}
             />
-            <p className="text-xs text-gray-400 mt-1">Total available for geothermal pilot</p>
           </div>
           <div>
             <FieldLabel>Timeline (months)</FieldLabel>
@@ -413,8 +410,7 @@ function CapabilitiesStep({
 
   return (
     <div className="max-w-xl mx-auto">
-      <h2 className="text-2xl font-bold text-slate-900 mb-1">Technical Capabilities</h2>
-      <p className="text-gray-500 text-sm mb-6">Your equipment and team capabilities determine geothermal readiness.</p>
+      <h2 className="text-2xl font-bold text-slate-900 mb-6">Technical Capabilities</h2>
 
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
@@ -457,7 +453,6 @@ function CapabilitiesStep({
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-400 mt-1">Geothermal wells in this region reach 400–600°F</p>
         </div>
 
         <div>
@@ -539,8 +534,7 @@ function SiteSelectionStep({
 }) {
   return (
     <div className="max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold text-slate-900 mb-1">Select a Candidate Site</h2>
-      <p className="text-gray-500 text-sm mb-6">Choose one Salton Sea / Imperial Valley zone to evaluate for your pilot.</p>
+      <h2 className="text-2xl font-bold text-slate-900 mb-6">Select a Site</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {SALTON_SEA_SITES.map((site) => {
@@ -715,7 +709,7 @@ function ResultsView({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top card */}
-      <div className={clsx('rounded-2xl border-2 p-6', rc.bg, rc.border)}>
+      <div className={clsx('rounded-2xl border-2 p-6 animate-fade-up', rc.bg, rc.border)}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -748,7 +742,7 @@ function ResultsView({
       </div>
 
       {/* Score breakdown */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-up delay-100">
         <h3 className="font-semibold text-gray-900 mb-4">Score Breakdown</h3>
         <div className="space-y-4">
           <ScoreRow label="Company Readiness" score={scores.companyReadiness} note="rigs, depth, budget, crew" />
@@ -764,7 +758,7 @@ function ResultsView({
       </div>
 
       {/* Sensitivity Sliders */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden no-print">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden no-print animate-fade-up delay-150">
         <button
           onClick={() => setShowSensitivity((s) => !s)}
           className="w-full flex items-center justify-between px-6 py-4 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
@@ -824,7 +818,7 @@ function ResultsView({
       </div>
 
       {/* Map + Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-up delay-200">
         <div className="bg-white rounded-2xl border border-gray-200 p-4">
           <h3 className="font-semibold text-gray-900 mb-3 text-sm">
             Site Map — {site.name}
@@ -897,7 +891,7 @@ function ResultsView({
       </div>
 
       {/* Next Steps */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-up delay-250">
         <h3 className="font-semibold text-gray-900 mb-4">Recommended Next Steps</h3>
         <ol className="space-y-3">
           {nextSteps.map((step, i) => (
@@ -912,7 +906,7 @@ function ResultsView({
       </div>
 
       {/* AI Executive Summary */}
-      <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6">
+      <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 animate-fade-up delay-300">
         <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
           <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-medium">AI</span>
           Executive Summary
@@ -1040,43 +1034,45 @@ export default function AssessPage() {
       <main className="flex-1 px-4 py-8 sm:px-6">
         <div className="no-print"><StepIndicator step={step} /></div>
 
-        {step === 1 && (
-          <CompanyInfoStep
-            form={form}
-            onChange={updateForm}
-            onNext={() => setStep(2)}
-            onLoadDemo={handleLoadDemo}
-            privateData={privateData}
-            onPrivateDataChange={setPrivateData}
-          />
-        )}
-        {step === 2 && (
-          <CapabilitiesStep
-            form={form}
-            onChange={updateForm}
-            onBack={() => setStep(1)}
-            onNext={() => setStep(3)}
-          />
-        )}
-        {step === 3 && (
-          <SiteSelectionStep
-            selectedSiteId={selectedSiteId}
-            onSelect={setSelectedSiteId}
-            onBack={() => setStep(2)}
-            onSubmit={handleAnalyze}
-            loading={loadingAnalysis}
-          />
-        )}
-        {step === 4 && result && site && (
-          <ResultsView
-            company={form}
-            site={site}
-            result={result}
-            explanation={explanation}
-            loadingExplanation={loadingExplanation}
-            onReset={handleReset}
-          />
-        )}
+        <div key={step} className="animate-fade-up">
+          {step === 1 && (
+            <CompanyInfoStep
+              form={form}
+              onChange={updateForm}
+              onNext={() => setStep(2)}
+              onLoadDemo={handleLoadDemo}
+              privateData={privateData}
+              onPrivateDataChange={setPrivateData}
+            />
+          )}
+          {step === 2 && (
+            <CapabilitiesStep
+              form={form}
+              onChange={updateForm}
+              onBack={() => setStep(1)}
+              onNext={() => setStep(3)}
+            />
+          )}
+          {step === 3 && (
+            <SiteSelectionStep
+              selectedSiteId={selectedSiteId}
+              onSelect={setSelectedSiteId}
+              onBack={() => setStep(2)}
+              onSubmit={handleAnalyze}
+              loading={loadingAnalysis}
+            />
+          )}
+          {step === 4 && result && site && (
+            <ResultsView
+              company={form}
+              site={site}
+              result={result}
+              explanation={explanation}
+              loadingExplanation={loadingExplanation}
+              onReset={handleReset}
+            />
+          )}
+        </div>
       </main>
     </div>
   )
