@@ -8,6 +8,7 @@ import { computeOverallScoreWeighted, deriveRecommendation } from '@/lib/scoring
 import { SALTON_SEA_SITES } from '@/data/sites'
 import SaltonSeaMap from '@/components/SaltonSeaMap'
 import SeismicCharts from '@/components/SeismicCharts'
+import PermitsRoadmap from '@/components/PermitsRoadmap'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -997,8 +998,13 @@ function ResultsView({
         </div>
       </div>
 
+      {/* ── Regulatory Roadmap ────────────────────────────────── */}
+      <div className="animate-fade-up delay-300">
+        <PermitsRoadmap company={company} />
+      </div>
+
       {/* ── Next Steps (timeline) ──────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-up delay-300">
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-up delay-400">
         <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="text-cyan-500">
             <path d="M7.5 1v6.5L11 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
@@ -1025,7 +1031,7 @@ function ResultsView({
       </div>
 
       {/* ── AI Executive Memo ──────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200 overflow-hidden animate-fade-up delay-400">
+      <div className="rounded-2xl border border-slate-200 overflow-hidden animate-fade-up delay-500">
         <div className="bg-slate-800 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 px-2 py-0.5 rounded-full font-semibold">AI</span>
