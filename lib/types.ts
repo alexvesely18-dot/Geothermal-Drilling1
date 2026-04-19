@@ -24,6 +24,7 @@ export interface Site {
   name: string
   description: string
   zone: string
+  region: 'salton-sea'
   lat: number
   lng: number
   tempGradientCPerKm: number

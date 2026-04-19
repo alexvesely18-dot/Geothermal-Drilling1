@@ -22,7 +22,7 @@ export default function LandingPage() {
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 bg-cyan-500/20 border border-cyan-500/30 rounded-full px-4 py-1.5 text-cyan-300 text-sm font-medium mb-6">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            Salton Sea / Imperial Valley Region
+            Salton Sea / Imperial Valley, California
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-5">
             Should your company{' '}
@@ -30,9 +30,9 @@ export default function LandingPage() {
           </h1>
           <p className="text-slate-300 text-lg mb-8 leading-relaxed">
             GeoPivot combines your company's drilling capabilities with site-level
-            seismic data, economics, and California policy to deliver a clear{' '}
-            <strong className="text-white">Go / Conditional Go / No-Go</strong> recommendation
-            for a Salton Sea geothermal pilot.
+            seismic data — powered by Scripps Institution of Oceanography simulation data —
+            to deliver a clear <strong className="text-white">Go / Conditional Go / No-Go</strong>{' '}
+            recommendation for a Salton Sea geothermal pilot.
           </p>
           <Link
             href="/assess"
@@ -43,28 +43,82 @@ export default function LandingPage() {
               <path d="M4 9h10M10 5l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
-          <p className="text-slate-500 text-sm mt-4">Takes about 3 minutes · No account required</p>
+          <p className="text-slate-500 text-sm mt-4">3 minutes · No account required · PDF export included</p>
+        </div>
+      </section>
+
+      {/* What is Salton Sea geothermal? */}
+      <section className="bg-white border-t border-gray-100 px-6 py-14">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-3">
+              What is Salton Sea geothermal?
+            </h2>
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              The Salton Sea / Imperial Valley region in Southern California sits atop one
+              of the most powerful geothermal resources in the world. The area produces
+              around 640 MW of clean electricity today — and the US Department of Energy
+              estimates the region could support over 2,500 MW of additional capacity.
+            </p>
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              For oil and gas drilling companies, this is a natural adjacency. The same rigs,
+              crews, and subsurface expertise used in conventional drilling translate directly
+              to geothermal wells. California's Renewable Portfolio Standard, the Lithium Valley
+              Act, and federal IRA incentives make the economics increasingly compelling.
+            </p>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              The key question isn't <em>whether</em> geothermal is an opportunity — it's{' '}
+              <em>which site, at what scale, and with what risk profile</em> fits your
+              company right now. That's exactly what GeoPivot answers.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
+              5 candidate zones evaluated
+            </p>
+            {[
+              { name: 'Salton Sea Geothermal Field', tag: 'Highest temp in continental US', risk: 'high' },
+              { name: 'Brawley Seismic Zone',        tag: 'Lithium + power upside',         risk: 'high' },
+              { name: 'Calipatria North Zone',       tag: 'Lowest capex entry point',        risk: 'medium' },
+              { name: 'East Mesa',                   tag: 'First-operator friendly',         risk: 'medium' },
+              { name: 'Heber Geothermal Field',      tag: 'Best infrastructure',             risk: 'low' },
+            ].map((s) => (
+              <div key={s.name} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">{s.name}</div>
+                  <div className="text-xs text-gray-500">{s.tag}</div>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  s.risk === 'high'   ? 'bg-red-100 text-red-700' :
+                  s.risk === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                        'bg-green-100 text-green-700'
+                }`}>
+                  {s.risk} seismic
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Feature Strip */}
-      <section className="bg-white border-t border-gray-200 px-6 py-12">
+      <section className="bg-gray-50 border-t border-gray-200 px-6 py-12">
         <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8">
           {[
             {
               icon: '⚡',
               title: 'Capability Matching',
-              desc: 'Your rig fleet, drilling depth, crew expertise, and budget are scored against site-specific requirements.',
+              desc: 'Rig fleet, drilling depth, temperature tolerance, crew expertise, and budget scored against each site.',
             },
             {
               icon: '🌋',
-              title: 'Seismic Risk Overlay',
-              desc: 'PGA, fault proximity, and historical seismicity data for each of 5 Salton Sea candidate zones.',
+              title: 'iPOD Seismic Model',
+              desc: 'PGV predictions from the Scripps Institution of Oceanography iPOD reduced-order model — not just static PGA lookups.',
             },
             {
               icon: '📊',
-              title: 'Economic & Policy Analysis',
-              desc: 'IRA incentives, CA electricity prices, and geothermal capacity factor baked into the viability score.',
+              title: 'Compare & Export',
+              desc: 'Evaluate up to 3 sites side by side, adjust budget with live scoring, then download a PDF or share a link.',
             },
           ].map((f) => (
             <div key={f.title} className="text-center px-4">
@@ -77,7 +131,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="bg-slate-900 text-slate-500 text-center text-xs py-4 px-6">
-        GeoPivot · Decision support for Salton Sea geothermal pilots · For evaluation purposes only
+        GeoPivot · Seismic data: Scripps Institution of Oceanography iPOD ROM · For evaluation purposes only
       </footer>
     </div>
   )

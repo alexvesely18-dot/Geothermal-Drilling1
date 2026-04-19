@@ -16,3 +16,24 @@
     @apply h-full rounded-full transition-all duration-700 ease-out;
   }
 }
+
+@media print {
+  /* Hide everything except results */
+  header, nav, .no-print { display: none !important; }
+  body { background: white !important; font-size: 12px; }
+  .print-container { padding: 0 !important; }
+
+  /* Force page breaks */
+  .print-break { page-break-before: always; }
+
+  /* Ensure colors print */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Remove shadows and borders that look bad in print */
+  .rounded-2xl { border-radius: 4px !important; }
+  button { display: none !important; }
+  a[href]::after { content: none !important; }
+
+  /* Score bars need explicit background */
+  .score-bar { background-color: #e5e7eb !important; }
+}
