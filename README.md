@@ -1,4 +1,4 @@
-# 🌋 GeoPivot — Geothermal Pilot Decision Support
+#  GeoPivot — Geothermal Pilot Decision Support
 
 > **"GeoPivot analyzes your drilling capabilities, budget, and risk tolerance against real Salton Sea seismic and economic data to recommend the best geothermal pilot site."**
 
