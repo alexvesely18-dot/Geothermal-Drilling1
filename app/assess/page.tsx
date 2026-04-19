@@ -4,12 +4,26 @@ import { useState } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
 import { CompanyProfile, Site, AnalysisResult } from '@/lib/types'
+import { computeOverallScoreWeighted, deriveRecommendation } from '@/lib/scoring'
 import { SALTON_SEA_SITES } from '@/data/sites'
 import SaltonSeaMap from '@/components/SaltonSeaMap'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Step = 1 | 2 | 3 | 4
+
+const DEMO_PROFILE: CompanyProfile = {
+  companyName: 'Desert Basin Energy',
+  rigCount: 4,
+  drillingDepthFt: 12000,
+  tempToleranceF: 450,
+  crewExpertise: 'experienced',
+  operatingRegions: ['california', 'southwest_us'],
+  pilotBudgetM: 35,
+  timelineMonths: 24,
+  riskTolerance: 'medium',
+}
+const DEMO_SITE_ID = 'salton-sea-geothermal'
 
 const DEFAULT_FORM: CompanyProfile = {
   companyName: '',
@@ -233,12 +247,14 @@ function CompanyInfoStep({
   form,
   onChange,
   onNext,
+  onLoadDemo,
   privateData,
   onPrivateDataChange,
 }: {
   form: CompanyProfile
   onChange: (u: Partial<CompanyProfile>) => void
   onNext: () => void
+  onLoadDemo: () => void
   privateData: string
   onPrivateDataChange: (v: string) => void
 }) {
@@ -278,7 +294,16 @@ function CompanyInfoStep({
 
   return (
     <div className="max-w-xl mx-auto">
-      <h2 className="text-2xl font-bold text-slate-900 mb-1">Company Information</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-2xl font-bold text-slate-900">Company Information</h2>
+        <button
+          type="button"
+          onClick={onLoadDemo}
+          className="text-xs bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-full font-medium transition-colors"
+        >
+          ★ Try Demo
+        </button>
+      </div>
       <p className="text-gray-500 text-sm mb-6">Tell us about your company and this pilot's strategic context.</p>
 
       <div className="space-y-5">
@@ -678,8 +703,14 @@ function ResultsView({
   loadingExplanation: boolean
   onReset: () => void
 }) {
-  const { scores, recommendation, keyOpportunities, keyRisks, nextSteps } = result
-  const rc = recColors(recommendation)
+  const { scores, keyOpportunities, keyRisks, nextSteps } = result
+
+  const [weights, setWeights] = useState({ readiness: 35, economic: 30, market: 20, seismic: 15 })
+  const [showSensitivity, setShowSensitivity] = useState(false)
+  const wtotal = weights.readiness + weights.economic + weights.market + weights.seismic
+  const liveScore = wtotal > 0 ? computeOverallScoreWeighted(scores, weights) : scores.overallPilotScore
+  const liveRec = deriveRecommendation(liveScore, company.riskTolerance)
+  const rc = recColors(liveRec)
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -689,30 +720,30 @@ function ResultsView({
           <div>
             <div className="flex items-center gap-3 mb-1">
               <span className={clsx('text-white text-sm font-bold px-3 py-1 rounded-full', rc.badge)}>
-                {recommendation}
+                {liveRec}
               </span>
               <span className="text-xs text-gray-500">
                 {company.companyName} · {site.name}
               </span>
             </div>
             <h2 className={clsx('text-xl font-bold', rc.text)}>
-              {recommendation === 'Go'
+              {liveRec === 'Go'
                 ? 'Proceed with the geothermal pilot'
-                : recommendation === 'Conditional Go'
+                : liveRec === 'Conditional Go'
                 ? 'Pilot viable with conditions addressed'
                 : 'Pilot not recommended at this stage'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               Overall Pilot Score:{' '}
-              <strong className={rc.text}>{scores.overallPilotScore}/100</strong> ·{' '}
-              {recommendation === 'Go'
+              <strong className={rc.text}>{liveScore}/100</strong> ·{' '}
+              {liveRec === 'Go'
                 ? 'Strong fit across readiness, economics, and policy'
-                : recommendation === 'Conditional Go'
+                : liveRec === 'Conditional Go'
                 ? 'Conditions exist that should be resolved before committing'
                 : 'Key capability or risk gaps make the pilot inadvisable now'}
             </p>
           </div>
-          <ScoreCircle score={scores.overallPilotScore} />
+          <ScoreCircle score={liveScore} />
         </div>
       </div>
 
@@ -730,6 +761,66 @@ function ResultsView({
             note="lower bar = safer site"
           />
         </div>
+      </div>
+
+      {/* Sensitivity Sliders */}
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden no-print">
+        <button
+          onClick={() => setShowSensitivity((s) => !s)}
+          className="w-full flex items-center justify-between px-6 py-4 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+        >
+          <span className="flex items-center gap-3">
+            Sensitivity Analysis
+            <span className={clsx('text-xs px-2 py-0.5 rounded-full font-medium', recColors(liveRec).badge, 'text-white')}>
+              {liveScore}/100 · {liveRec}
+            </span>
+          </span>
+          <svg
+            width="16" height="16" viewBox="0 0 16 16" fill="none"
+            className={clsx('transition-transform text-gray-400', showSensitivity && 'rotate-180')}
+          >
+            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        {showSensitivity && (
+          <div className="px-6 pb-6 space-y-4 border-t border-gray-100 pt-4">
+            <p className="text-xs text-gray-500">
+              Adjust how much each factor is weighted in the overall pilot score. The recommendation and score above update live.
+            </p>
+            {(
+              [
+                { key: 'readiness', label: 'Company Readiness' },
+                { key: 'economic',  label: 'Economic Viability' },
+                { key: 'market',    label: 'Market & Policy' },
+                { key: 'seismic',   label: 'Seismic Safety' },
+              ] as { key: keyof typeof weights; label: string }[]
+            ).map(({ key, label }) => {
+              const pct = wtotal > 0 ? Math.round((weights[key] / wtotal) * 100) : 25
+              return (
+                <div key={key}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm text-gray-700">{label}</span>
+                    <span className="text-xs font-semibold text-gray-500 w-8 text-right">{pct}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={weights[key]}
+                    onChange={(e) => setWeights((w) => ({ ...w, [key]: Number(e.target.value) }))}
+                    className="w-full accent-cyan-500 h-2 cursor-pointer"
+                  />
+                </div>
+              )
+            })}
+            <button
+              onClick={() => setWeights({ readiness: 35, economic: 30, market: 20, seismic: 15 })}
+              className="text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2"
+            >
+              Reset to defaults
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Map + Insights */}
@@ -842,7 +933,7 @@ function ResultsView({
       </div>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-3 justify-between items-center pb-6">
+      <div className="flex flex-wrap gap-3 justify-between items-center pb-6 no-print">
         <button
           onClick={onReset}
           className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
@@ -878,6 +969,12 @@ export default function AssessPage() {
 
   function updateForm(updates: Partial<CompanyProfile>) {
     setForm((prev) => ({ ...prev, ...updates }))
+  }
+
+  function handleLoadDemo() {
+    setForm(DEMO_PROFILE)
+    setSelectedSiteId(DEMO_SITE_ID)
+    setStep(3)
   }
 
   async function handleAnalyze() {
@@ -941,13 +1038,14 @@ export default function AssessPage() {
 
       {/* Content */}
       <main className="flex-1 px-4 py-8 sm:px-6">
-        <StepIndicator step={step} />
+        <div className="no-print"><StepIndicator step={step} /></div>
 
         {step === 1 && (
           <CompanyInfoStep
             form={form}
             onChange={updateForm}
             onNext={() => setStep(2)}
+            onLoadDemo={handleLoadDemo}
             privateData={privateData}
             onPrivateDataChange={setPrivateData}
           />

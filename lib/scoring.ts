@@ -148,9 +148,25 @@ export function computeOverallScore(s: Omit<ScoreBreakdown, 'overallPilotScore'>
   return Math.max(0, Math.min(100, Math.round(raw)))
 }
 
+// ─── Weighted Overall Score (for sensitivity analysis) ────────────────────────
+
+export function computeOverallScoreWeighted(
+  s: Omit<ScoreBreakdown, 'overallPilotScore'>,
+  w: { readiness: number; economic: number; market: number; seismic: number }
+): number {
+  const total = w.readiness + w.economic + w.market + w.seismic
+  if (total === 0) return 0
+  const raw =
+    s.companyReadiness    * (w.readiness / total) +
+    s.economicViability   * (w.economic  / total) +
+    s.marketPolicySupport * (w.market    / total) +
+    (100 - s.seismicRisk) * (w.seismic  / total)
+  return Math.max(0, Math.min(100, Math.round(raw)))
+}
+
 // ─── Recommendation ───────────────────────────────────────────────────────────
 
-function deriveRecommendation(
+export function deriveRecommendation(
   score: number,
   risk: CompanyProfile['riskTolerance']
 ): AnalysisResult['recommendation'] {
